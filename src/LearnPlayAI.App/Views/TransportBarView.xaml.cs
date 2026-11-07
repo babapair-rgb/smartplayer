@@ -28,4 +28,20 @@ public partial class TransportBarView : UserControl
             shell.ToggleFullScreen();
         }
     }
+
+    private void OnAudioTrackSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox { SelectedItem: ValueTuple<int, string> track } && DataContext is PlayerViewModel viewModel)
+        {
+            viewModel.SelectAudioTrackCommand.Execute(track.Item1);
+        }
+    }
+
+    private void OnSubtitleTrackSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox { SelectedItem: ValueTuple<int, string> track } && DataContext is PlayerViewModel viewModel)
+        {
+            viewModel.SelectSubtitleTrackCommand.Execute(track.Item1);
+        }
+    }
 }

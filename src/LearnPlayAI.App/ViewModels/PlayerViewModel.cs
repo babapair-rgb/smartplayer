@@ -20,6 +20,12 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty] private string currentTitle = "No video loaded";
     [ObservableProperty] private double volume;
     [ObservableProperty] private float rate = 1.0f;
+    [ObservableProperty] private IReadOnlyList<(int Id, string Name)> audioTracks = Array.Empty<(int, string)>();
+    [ObservableProperty] private IReadOnlyList<(int Id, string Name)> subtitleTracks = Array.Empty<(int, string)>();
+    [ObservableProperty] private double subtitleDelaySeconds;
+    [ObservableProperty] private float brightness = 1.0f;
+    [ObservableProperty] private float contrast = 1.0f;
+    [ObservableProperty] private float saturation = 1.0f;
 
     public IPlayerEngine Engine { get; }
 
@@ -43,8 +49,15 @@ public partial class PlayerViewModel : ObservableObject
                 _ = _libraryService.UpdateDurationAsync(_currentEntry.VideoId, dur);
             }
         };
-        Engine.StateChanged += (_, state) =>
-            Application.Current.Dispatcher.Invoke(() => IsPlaying = state == PlaybackState.Playing);
+        Engine.StateChanged += (_, state) => Application.Current.Dispatcher.Invoke(() =>
+        {
+            IsPlaying = state == PlaybackState.Playing;
+            if (state == PlaybackState.Playing)
+            {
+                AudioTracks = Engine.AudioTracks;
+                SubtitleTracks = Engine.SubtitleTracks;
+            }
+        });
     }
 
     public void LoadVideo(VideoEntry entry)
@@ -103,6 +116,21 @@ public partial class PlayerViewModel : ObservableObject
         Rate = PlaybackRate.Clamp(requested);
         Engine.SetRate(Rate);
     }
+
+    [RelayCommand]
+    private void SelectAudioTrack(int trackId) => Engine.SetAudioTrack(trackId);
+
+    [RelayCommand]
+    private void SelectSubtitleTrack(int trackId) => Engine.SetSubtitleTrack(trackId);
+
+    partial void OnSubtitleDelaySecondsChanged(double value) =>
+        Engine.SetSubtitleDelay(TimeSpan.FromSeconds(value));
+
+    partial void OnBrightnessChanged(float value) => ApplyVideoAdjust();
+    partial void OnContrastChanged(float value) => ApplyVideoAdjust();
+    partial void OnSaturationChanged(float value) => ApplyVideoAdjust();
+
+    private void ApplyVideoAdjust() => Engine.SetVideoAdjust(Brightness, Contrast, Saturation);
 
     partial void OnVolumeChanged(double value) => Engine.Volume = (float)value;
 }

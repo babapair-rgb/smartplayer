@@ -33,7 +33,25 @@
             <TextBlock Text="{Binding DurationSeconds, Converter={StaticResource SecondsToTimeStringConverter}}"
                        Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" Margin="0,0,16,0" />
             <TextBlock Text="Volume" Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" Margin="0,0,8,0" />
-            <Slider Width="120" Minimum="0" Maximum="1" Value="{Binding Volume}" VerticalAlignment="Center" />
+            <Slider Width="100" Minimum="0" Maximum="1" Value="{Binding Volume}" VerticalAlignment="Center" Margin="0,0,16,0" />
+
+            <TextBlock Text="Audio" Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" Margin="0,0,4,0" />
+            <ComboBox Width="110" ItemsSource="{Binding AudioTracks}" DisplayMemberPath="Name" Margin="0,0,16,0"
+                      SelectionChanged="OnAudioTrackSelectionChanged" />
+
+            <TextBlock Text="Subtitles" Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" Margin="0,0,4,0" />
+            <ComboBox Width="110" ItemsSource="{Binding SubtitleTracks}" DisplayMemberPath="Name" Margin="0,0,16,0"
+                      SelectionChanged="OnSubtitleTrackSelectionChanged" />
+
+            <TextBlock Text="Sub sync (s)" Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" Margin="0,0,4,0" />
+            <Slider Width="80" Minimum="-10" Maximum="10" Value="{Binding SubtitleDelaySeconds}" VerticalAlignment="Center" Margin="0,0,16,0" />
+
+            <TextBlock Text="B" ToolTip="Brightness" Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" Margin="0,0,2,0" />
+            <Slider Width="60" Minimum="0" Maximum="2" Value="{Binding Brightness}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBlock Text="C" ToolTip="Contrast" Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" Margin="0,0,2,0" />
+            <Slider Width="60" Minimum="0" Maximum="2" Value="{Binding Contrast}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBlock Text="S" ToolTip="Saturation" Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" Margin="0,0,2,0" />
+            <Slider Width="60" Minimum="0" Maximum="2" Value="{Binding Saturation}" VerticalAlignment="Center" />
         </StackPanel>
     </Grid>
 </UserControl>
