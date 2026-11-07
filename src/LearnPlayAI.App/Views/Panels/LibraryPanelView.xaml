@@ -18,6 +18,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="150" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{Binding Title}" Foreground="{DynamicResource Text.Primary}"
                                    VerticalAlignment="Center" />
@@ -27,6 +28,11 @@
                         <Button Grid.Column="2" Content="Remove"
                                 Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                 CommandParameter="{Binding}" Padding="8,2" />
+                        <ComboBox Grid.Column="3" Margin="8,0,0,0"
+                                  ItemsSource="{Binding DataContext.Playlists, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                  DisplayMemberPath="Name" Tag="{Binding}"
+                                  SelectionChanged="OnAddToPlaylistSelectionChanged"
+                                  ToolTip="Add to playlist" />
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>

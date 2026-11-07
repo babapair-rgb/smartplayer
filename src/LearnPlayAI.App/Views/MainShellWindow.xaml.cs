@@ -1,10 +1,11 @@
-using System.Threading.Tasks;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using LearnPlayAI.App.Services;
 using LearnPlayAI.App.ViewModels;
 using LearnPlayAI.Core.Models;
+using LearnPlayAI.Core.Player;
 using LearnPlayAI.Core.Services;
 using Microsoft.Win32;
 
@@ -15,18 +16,28 @@ public partial class MainShellWindow : Window
     private readonly SettingsService _settingsService;
     private readonly ThemeManager _themeManager;
     private readonly LibraryService _libraryService;
+    private readonly PlaylistService _playlistService;
+    private readonly PlayerViewModel _playerViewModel;
     private readonly PlayerView _playerView;
+
+    private Guid? _activePlaylistId;
+    private WindowState _previousWindowState = WindowState.Normal;
+    private WindowStyle _previousWindowStyle = WindowStyle.SingleBorderWindow;
+    private bool _isFullScreen;
 
     public MainShellWindow(
         SettingsService settingsService,
         ThemeManager themeManager,
         LibraryService libraryService,
+        PlaylistService playlistService,
         PlayerViewModel playerViewModel,
         TransportBarView transportBarView)
     {
         _settingsService = settingsService;
         _themeManager = themeManager;
         _libraryService = libraryService;
+        _playlistService = playlistService;
+        _playerViewModel = playerViewModel;
 
         // ThemeManager.Apply must merge the theme dictionary into Application.Resources
         // *before* InitializeComponent() parses this window's XAML: the nav buttons use
@@ -42,36 +53,17 @@ public partial class MainShellWindow : Window
         _playerView = new PlayerView(playerViewModel);
         TransportBarHost.Child = transportBarView;
 
+        _playerViewModel.Engine.StateChanged += OnEngineStateChanged;
+        _playerViewModel.Engine.ErrorOccurred += OnEngineError;
+
         CenterContent.Content = BuildHomePlaceholder();
     }
 
-    private WindowState _previousWindowState = WindowState.Normal;
-    private WindowStyle _previousWindowStyle = WindowStyle.SingleBorderWindow;
-    private bool _isFullScreen;
-
-    public void ToggleFullScreen()
-    {
-        if (!_isFullScreen)
-        {
-            _previousWindowState = WindowState;
-            _previousWindowStyle = WindowStyle;
-            WindowStyle = WindowStyle.None;
-            WindowState = WindowState.Maximized;
-            _isFullScreen = true;
-        }
-        else
-        {
-            WindowStyle = _previousWindowStyle;
-            WindowState = _previousWindowState;
-            _isFullScreen = false;
-        }
-    }
-
     private void OnNavLibrary(object sender, RoutedEventArgs e) =>
-        CenterContent.Content = new Panels.LibraryPanelView(_libraryService, OpenVideo);
+        CenterContent.Content = new Panels.LibraryPanelView(_libraryService, _playlistService, OpenVideo);
 
     private void OnNavPlaylists(object sender, RoutedEventArgs e) =>
-        CenterContent.Content = BuildPlaceholder("Playlists panel arrives in a later task.");
+        CenterContent.Content = new Panels.PlaylistsPanelView(_playlistService, _libraryService, PlayFromPlaylist);
 
     private void OnNavRecent(object sender, RoutedEventArgs e) =>
         CenterContent.Content = new Panels.RecentPanelView(_libraryService, OpenVideo);
@@ -124,7 +116,7 @@ public partial class MainShellWindow : Window
         return panel;
     }
 
-    private async Task OpenFileDialogAsync()
+    private async System.Threading.Tasks.Task OpenFileDialogAsync()
     {
         var dialog = new OpenFileDialog
         {
@@ -155,15 +147,77 @@ public partial class MainShellWindow : Window
 
     private void OpenVideo(VideoEntry entry)
     {
+        _activePlaylistId = null;
+        OpenVideoEntry(entry);
+    }
+
+    private async void PlayFromPlaylist(Guid playlistId, Guid startVideoId)
+    {
+        var entry = await _libraryService.GetByIdAsync(startVideoId);
+        if (entry is null) return;
+        _activePlaylistId = playlistId;
+        OpenVideoEntry(entry);
+    }
+
+    private void OpenVideoEntry(VideoEntry entry)
+    {
         CenterContent.Content = _playerView;
         _playerView.PlayVideo(entry);
     }
 
-    private UIElement BuildPlaceholder(string text) => new TextBlock
+    private void OnEngineStateChanged(object? sender, PlaybackState state)
     {
-        Text = text,
-        Foreground = (Brush)FindResource("Text.Primary"),
-        Margin = new Thickness(24),
-        TextWrapping = TextWrapping.Wrap
-    };
+        if (state != PlaybackState.Ended || _activePlaylistId is null) return;
+        Dispatcher.Invoke(() => _ = AdvancePlaylistAsync());
+    }
+
+    private void OnEngineError(object? sender, string message)
+    {
+        if (_activePlaylistId is null) return;
+        Dispatcher.Invoke(() => _ = AdvancePlaylistAsync());
+    }
+
+    private async System.Threading.Tasks.Task AdvancePlaylistAsync()
+    {
+        if (_activePlaylistId is null) return;
+
+        var playlist = await _playlistService.GetPlaylistAsync(_activePlaylistId.Value);
+        if (playlist is null)
+        {
+            _activePlaylistId = null;
+            return;
+        }
+
+        var ordered = playlist.Items.OrderBy(i => i.Position).ToList();
+        var currentIndex = ordered.FindIndex(i => i.VideoId == _playerViewModel.CurrentVideoId);
+        if (currentIndex < 0 || currentIndex + 1 >= ordered.Count)
+        {
+            _activePlaylistId = null;
+            return;
+        }
+
+        var nextEntry = await _libraryService.GetByIdAsync(ordered[currentIndex + 1].VideoId);
+        if (nextEntry is not null)
+        {
+            OpenVideoEntry(nextEntry);
+        }
+    }
+
+    public void ToggleFullScreen()
+    {
+        if (!_isFullScreen)
+        {
+            _previousWindowState = WindowState;
+            _previousWindowStyle = WindowStyle;
+            WindowStyle = WindowStyle.None;
+            WindowState = WindowState.Maximized;
+            _isFullScreen = true;
+        }
+        else
+        {
+            WindowStyle = _previousWindowStyle;
+            WindowState = _previousWindowState;
+            _isFullScreen = false;
+        }
+    }
 }

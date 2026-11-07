@@ -10,13 +10,16 @@ namespace LearnPlayAI.App.ViewModels;
 public partial class LibraryViewModel : ObservableObject
 {
     private readonly LibraryService _libraryService;
+    private readonly PlaylistService _playlistService;
     private readonly Action<VideoEntry> _onOpen;
 
     public ObservableCollection<VideoEntry> Items { get; } = new();
+    public ObservableCollection<Playlist> Playlists { get; } = new();
 
-    public LibraryViewModel(LibraryService libraryService, Action<VideoEntry> onOpen)
+    public LibraryViewModel(LibraryService libraryService, PlaylistService playlistService, Action<VideoEntry> onOpen)
     {
         _libraryService = libraryService;
+        _playlistService = playlistService;
         _onOpen = onOpen;
         _ = RefreshAsync();
     }
@@ -27,6 +30,12 @@ public partial class LibraryViewModel : ObservableObject
         foreach (var entry in await _libraryService.GetLibraryAsync())
         {
             Items.Add(entry);
+        }
+
+        Playlists.Clear();
+        foreach (var playlist in await _playlistService.GetPlaylistsAsync())
+        {
+            Playlists.Add(playlist);
         }
     }
 
@@ -56,4 +65,8 @@ public partial class LibraryViewModel : ObservableObject
         await _libraryService.RemoveAsync(entry.VideoId);
         await RefreshAsync();
     }
+
+    [RelayCommand]
+    private async Task AddToPlaylist((VideoEntry Video, Playlist Playlist) args) =>
+        await _playlistService.AddVideoAsync(args.Playlist.PlaylistId, args.Video.VideoId);
 }

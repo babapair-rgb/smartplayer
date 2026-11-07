@@ -28,6 +28,7 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty] private float saturation = 1.0f;
 
     public IPlayerEngine Engine { get; }
+    public Guid? CurrentVideoId => _currentEntry?.VideoId;
 
     public PlayerViewModel(IPlayerEngine engine, LibraryService libraryService, SettingsService settingsService)
     {
