@@ -74,7 +74,7 @@ public partial class MainShellWindow : Window
         CenterContent.Content = BuildPlaceholder("Playlists panel arrives in a later task.");
 
     private void OnNavRecent(object sender, RoutedEventArgs e) =>
-        CenterContent.Content = BuildPlaceholder("Recent panel arrives in a later task.");
+        CenterContent.Content = new Panels.RecentPanelView(_libraryService, OpenVideo);
 
     private void OnNavSettings(object sender, RoutedEventArgs e)
     {
