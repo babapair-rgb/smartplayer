@@ -13,8 +13,8 @@ public interface IPlayerEngine : IDisposable
     float Rate { get; }
     float Volume { get; set; }
 
-    IReadOnlyList<(int Id, string Name)> AudioTracks { get; }
-    IReadOnlyList<(int Id, string Name)> SubtitleTracks { get; }
+    IReadOnlyList<TrackInfo> AudioTracks { get; }
+    IReadOnlyList<TrackInfo> SubtitleTracks { get; }
 
     void Open(string filePath);
     void Play();

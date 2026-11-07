@@ -24,8 +24,8 @@ public sealed class LibVlcPlayerEngine : IPlayerEngine
         set => _mediaPlayer.Volume = (int)Math.Clamp(value * 100f, 0f, 100f);
     }
 
-    public IReadOnlyList<(int Id, string Name)> AudioTracks { get; private set; } = Array.Empty<(int, string)>();
-    public IReadOnlyList<(int Id, string Name)> SubtitleTracks { get; private set; } = Array.Empty<(int, string)>();
+    public IReadOnlyList<TrackInfo> AudioTracks { get; private set; } = Array.Empty<TrackInfo>();
+    public IReadOnlyList<TrackInfo> SubtitleTracks { get; private set; } = Array.Empty<TrackInfo>();
 
     public MediaPlayer NativeMediaPlayer => _mediaPlayer;
 
@@ -108,9 +108,9 @@ public sealed class LibVlcPlayerEngine : IPlayerEngine
     private void RefreshTracks()
     {
         AudioTracks = _mediaPlayer.AudioTrackDescription?
-            .Select(t => (t.Id, t.Name)).ToList() ?? new List<(int, string)>();
+            .Select(t => new TrackInfo(t.Id, t.Name)).ToList() ?? new List<TrackInfo>();
         SubtitleTracks = _mediaPlayer.SpuDescription?
-            .Select(t => (t.Id, t.Name)).ToList() ?? new List<(int, string)>();
+            .Select(t => new TrackInfo(t.Id, t.Name)).ToList() ?? new List<TrackInfo>();
     }
 
     private void SetState(PlaybackState state)

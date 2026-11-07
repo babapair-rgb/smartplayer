@@ -101,7 +101,7 @@ public sealed class SqlitePlaylistRepository : IPlaylistRepository
         }
 
         using var insert = connection.CreateCommand();
-        insert.CommandText = "INSERT INTO playlist_items (playlist_id, video_id, position) VALUES ($pid, $vid, $pos);";
+        insert.CommandText = "INSERT OR IGNORE INTO playlist_items (playlist_id, video_id, position) VALUES ($pid, $vid, $pos);";
         insert.Parameters.AddWithValue("$pid", playlistId.ToString());
         insert.Parameters.AddWithValue("$vid", videoId.ToString());
         insert.Parameters.AddWithValue("$pos", nextPosition);

@@ -39,6 +39,14 @@ public partial class App : Application
 
         Services = services.BuildServiceProvider();
 
+        DispatcherUnhandledException += (_, args) =>
+        {
+            MessageBox.Show(
+                $"An unexpected error occurred:\n{args.Exception.Message}",
+                "LearnPlay AI", MessageBoxButton.OK, MessageBoxImage.Error);
+            args.Handled = true;
+        };
+
         var settingsService = Services.GetRequiredService<SettingsService>();
         settingsService.InitializeAsync().GetAwaiter().GetResult();
 

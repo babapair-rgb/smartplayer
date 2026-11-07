@@ -82,7 +82,7 @@ public static class DatabaseBootstrapper
                 throw new SqliteException("quick_check failed", 11);
             }
         }
-        catch (SqliteException)
+        catch (SqliteException ex) when (ex.SqliteErrorCode is 11 or 26)
         {
             var backupPath = $"{dbPath}.corrupt-{DateTime.UtcNow:yyyyMMddHHmmssfff}.bak";
             File.Copy(dbPath, backupPath, overwrite: true);

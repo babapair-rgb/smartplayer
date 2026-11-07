@@ -15,6 +15,7 @@ public partial class PlayerViewModel : ObservableObject
     private DateTime _lastPersistUtc = DateTime.MinValue;
     private double _volumeBeforeMute;
     private bool _isMuted;
+    private TimeSpan? _pendingSeek;
 
     [ObservableProperty] private bool isPlaying;
     [ObservableProperty] private double positionSeconds;
@@ -22,8 +23,8 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty] private string currentTitle = "No video loaded";
     [ObservableProperty] private double volume;
     [ObservableProperty] private float rate = 1.0f;
-    [ObservableProperty] private IReadOnlyList<(int Id, string Name)> audioTracks = Array.Empty<(int, string)>();
-    [ObservableProperty] private IReadOnlyList<(int Id, string Name)> subtitleTracks = Array.Empty<(int, string)>();
+    [ObservableProperty] private IReadOnlyList<TrackInfo> audioTracks = Array.Empty<TrackInfo>();
+    [ObservableProperty] private IReadOnlyList<TrackInfo> subtitleTracks = Array.Empty<TrackInfo>();
     [ObservableProperty] private double subtitleDelaySeconds;
     [ObservableProperty] private float brightness = 1.0f;
     [ObservableProperty] private float contrast = 1.0f;
@@ -41,24 +42,34 @@ public partial class PlayerViewModel : ObservableObject
 
         Engine.PositionChanged += (_, pos) =>
         {
-            Application.Current.Dispatcher.Invoke(() => PositionSeconds = pos.TotalSeconds);
+            Application.Current.Dispatcher.BeginInvoke(() => PositionSeconds = pos.TotalSeconds);
             MaybePersistPosition(pos);
         };
         Engine.DurationChanged += (_, dur) =>
         {
-            Application.Current.Dispatcher.Invoke(() => DurationSeconds = dur.TotalSeconds);
+            Application.Current.Dispatcher.BeginInvoke(() => DurationSeconds = dur.TotalSeconds);
             if (_currentEntry is not null)
             {
                 _ = _libraryService.UpdateDurationAsync(_currentEntry.VideoId, dur);
             }
         };
-        Engine.StateChanged += (_, state) => Application.Current.Dispatcher.Invoke(() =>
+        Engine.StateChanged += (_, state) => Application.Current.Dispatcher.BeginInvoke(() =>
         {
             IsPlaying = state == PlaybackState.Playing;
             if (state == PlaybackState.Playing)
             {
                 AudioTracks = Engine.AudioTracks;
                 SubtitleTracks = Engine.SubtitleTracks;
+
+                if (_pendingSeek is { } seekTarget)
+                {
+                    Engine.Seek(seekTarget);
+                    _pendingSeek = null;
+                }
+            }
+            else if (state == PlaybackState.Ended && _currentEntry is not null)
+            {
+                _ = _libraryService.UpdatePlaybackPositionAsync(_currentEntry.VideoId, TimeSpan.Zero);
             }
         });
     }
@@ -68,11 +79,8 @@ public partial class PlayerViewModel : ObservableObject
         _currentEntry = entry;
         CurrentTitle = entry.Title;
         Engine.Open(entry.FilePath);
+        _pendingSeek = entry.LastPosition > TimeSpan.Zero ? entry.LastPosition : null;
         Engine.Play();
-        if (entry.LastPosition > TimeSpan.Zero)
-        {
-            Engine.Seek(entry.LastPosition);
-        }
     }
 
     private void MaybePersistPosition(TimeSpan position)

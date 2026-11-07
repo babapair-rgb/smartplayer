@@ -2,7 +2,6 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Threading;
 using LearnPlayAI.App.Services;
 using LearnPlayAI.App.ViewModels;
@@ -45,13 +44,11 @@ public partial class MainShellWindow : Window
         _playerViewModel = playerViewModel;
         _shortcutManager = shortcutManager;
 
-        // ThemeManager.Apply must merge the theme dictionary into Application.Resources
-        // *before* InitializeComponent() parses this window's XAML: the nav buttons use
-        // {StaticResource NavButtonStyle}, which resolves eagerly at parse time against
-        // whatever is already in Application.Resources. Calling InitializeComponent()
-        // first (as a literal reading of the task brief would do) throws a
-        // XamlParseException ("Cannot find resource named 'NavButtonStyle'") because no
-        // theme dictionary has been merged in yet.
+        // NavButtonStyle now lives in App.xaml's own Application.Resources (theme-independent,
+        // using {DynamicResource Text.Primary} for its Foreground), so it no longer depends on
+        // a theme dictionary being merged first. We still apply the theme before
+        // InitializeComponent() so the window's own brush resources (App.Background, etc.) are
+        // available as soon as the window is constructed.
         _themeManager.Apply(_settingsService.Current.Theme);
 
         InitializeComponent();
@@ -101,13 +98,14 @@ public partial class MainShellWindow : Window
     private UIElement BuildHomePlaceholder()
     {
         var panel = new StackPanel { Margin = new Thickness(24) };
-        panel.Children.Add(new TextBlock
+        var instructions = new TextBlock
         {
             Text = "Select Library, Playlists, or Recent from the left, or open a file directly:",
-            Foreground = (Brush)FindResource("Text.Primary"),
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 0, 0, 12)
-        });
+        };
+        instructions.SetResourceReference(TextBlock.ForegroundProperty, "Text.Primary");
+        panel.Children.Add(instructions);
         var openButton = new Button
         {
             Content = "Open Video File...",
@@ -134,13 +132,20 @@ public partial class MainShellWindow : Window
     private async void OnWindowDrop(object sender, DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
-        var files = (string[])e.Data.GetData(DataFormats.FileDrop)!;
+        var files = ((string[])e.Data.GetData(DataFormats.FileDrop)!).Where(File.Exists).ToArray();
         if (files.Length == 0) return;
 
         VideoEntry? lastRegistered = null;
         foreach (var file in files)
         {
-            lastRegistered = await _libraryService.RegisterFileAsync(file);
+            try
+            {
+                lastRegistered = await _libraryService.RegisterFileAsync(file);
+            }
+            catch (IOException)
+            {
+                // Skip files that can't be read (locked, permission denied, etc.)
+            }
         }
         if (lastRegistered is not null)
         {
@@ -225,12 +230,12 @@ public partial class MainShellWindow : Window
     private void OnEngineStateChanged(object? sender, PlaybackState state)
     {
         if (state != PlaybackState.Ended || _activePlaylistId is null) return;
-        Dispatcher.Invoke(() => _ = AdvancePlaylistAsync());
+        Dispatcher.BeginInvoke(() => _ = AdvancePlaylistAsync());
     }
 
     private void OnEngineError(object? sender, string message)
     {
-        Dispatcher.Invoke(() =>
+        Dispatcher.BeginInvoke(() =>
         {
             ShowToast($"Playback error: {message}");
             if (_activePlaylistId is not null)

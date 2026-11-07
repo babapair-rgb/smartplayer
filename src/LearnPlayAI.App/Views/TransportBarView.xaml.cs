@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LearnPlayAI.App.ViewModels;
+using LearnPlayAI.Core.Player;
 
 namespace LearnPlayAI.App.Views;
 
@@ -31,17 +32,17 @@ public partial class TransportBarView : UserControl
 
     private void OnAudioTrackSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is ComboBox { SelectedItem: ValueTuple<int, string> track } && DataContext is PlayerViewModel viewModel)
+        if (sender is ComboBox { SelectedItem: TrackInfo track } && DataContext is PlayerViewModel viewModel)
         {
-            viewModel.SelectAudioTrackCommand.Execute(track.Item1);
+            viewModel.SelectAudioTrackCommand.Execute(track.Id);
         }
     }
 
     private void OnSubtitleTrackSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is ComboBox { SelectedItem: ValueTuple<int, string> track } && DataContext is PlayerViewModel viewModel)
+        if (sender is ComboBox { SelectedItem: TrackInfo track } && DataContext is PlayerViewModel viewModel)
         {
-            viewModel.SelectSubtitleTrackCommand.Execute(track.Item1);
+            viewModel.SelectSubtitleTrackCommand.Execute(track.Id);
         }
     }
 }
