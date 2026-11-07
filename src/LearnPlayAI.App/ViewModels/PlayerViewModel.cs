@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -18,6 +19,7 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty] private double durationSeconds;
     [ObservableProperty] private string currentTitle = "No video loaded";
     [ObservableProperty] private double volume;
+    [ObservableProperty] private float rate = 1.0f;
 
     public IPlayerEngine Engine { get; }
 
@@ -78,6 +80,29 @@ public partial class PlayerViewModel : ObservableObject
 
     [RelayCommand]
     private void Seek(double seconds) => Engine.Seek(TimeSpan.FromSeconds(seconds));
+
+    [RelayCommand]
+    private void StepFrame() => Engine.StepFrame();
+
+    [RelayCommand]
+    private void SpeedUp() => SetRate(Rate + 0.25f);
+
+    [RelayCommand]
+    private void SpeedDown() => SetRate(Rate - 0.25f);
+
+    [RelayCommand]
+    private void Screenshot()
+    {
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "LearnPlayAI");
+        Engine.Screenshot(dir);
+    }
+
+    private void SetRate(float requested)
+    {
+        Rate = PlaybackRate.Clamp(requested);
+        Engine.SetRate(Rate);
+    }
 
     partial void OnVolumeChanged(double value) => Engine.Volume = (float)value;
 }

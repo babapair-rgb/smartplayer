@@ -19,7 +19,14 @@
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
             <Button Content="Stop" Command="{Binding StopCommand}" Margin="0,0,8,0" />
-            <Button Content="Play / Pause" Command="{Binding PlayPauseCommand}" Margin="0,0,16,0" />
+            <Button Content="Play / Pause" Command="{Binding PlayPauseCommand}" Margin="0,0,8,0" />
+            <Button Content="Frame &gt;" Command="{Binding StepFrameCommand}" Margin="0,0,8,0" ToolTip="Step one frame forward" />
+            <Button Content="-" Command="{Binding SpeedDownCommand}" Margin="0,0,0,0" ToolTip="Slower" />
+            <TextBlock Text="{Binding Rate, StringFormat={}{0:0.00}x}" Foreground="{DynamicResource Text.Primary}"
+                       VerticalAlignment="Center" Margin="4,0" Width="40" TextAlignment="Center" />
+            <Button Content="+" Command="{Binding SpeedUpCommand}" Margin="0,0,16,0" ToolTip="Faster" />
+            <Button Content="Screenshot" Command="{Binding ScreenshotCommand}" Margin="0,0,16,0" />
+            <Button x:Name="FullScreenButton" Content="Full Screen" Click="OnFullScreenClick" Margin="0,0,16,0" />
             <TextBlock Text="{Binding PositionSeconds, Converter={StaticResource SecondsToTimeStringConverter}}"
                        Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" />
             <TextBlock Text=" / " Foreground="{DynamicResource Text.Primary}" VerticalAlignment="Center" />

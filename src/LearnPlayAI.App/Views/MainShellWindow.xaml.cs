@@ -45,6 +45,28 @@ public partial class MainShellWindow : Window
         CenterContent.Content = BuildHomePlaceholder();
     }
 
+    private WindowState _previousWindowState = WindowState.Normal;
+    private WindowStyle _previousWindowStyle = WindowStyle.SingleBorderWindow;
+    private bool _isFullScreen;
+
+    public void ToggleFullScreen()
+    {
+        if (!_isFullScreen)
+        {
+            _previousWindowState = WindowState;
+            _previousWindowStyle = WindowStyle;
+            WindowStyle = WindowStyle.None;
+            WindowState = WindowState.Maximized;
+            _isFullScreen = true;
+        }
+        else
+        {
+            WindowStyle = _previousWindowStyle;
+            WindowState = _previousWindowState;
+            _isFullScreen = false;
+        }
+    }
+
     private void OnNavLibrary(object sender, RoutedEventArgs e) =>
         CenterContent.Content = BuildPlaceholder("Library panel arrives in a later task.");
 
