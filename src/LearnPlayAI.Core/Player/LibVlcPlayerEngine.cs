@@ -17,6 +17,13 @@ public sealed class LibVlcPlayerEngine : IPlayerEngine
     public TimeSpan Position { get; private set; }
     public TimeSpan Duration { get; private set; }
     public float Rate { get; private set; } = 1.0f;
+
+    public float Volume
+    {
+        get => _mediaPlayer.Volume / 100f;
+        set => _mediaPlayer.Volume = (int)Math.Clamp(value * 100f, 0f, 100f);
+    }
+
     public IReadOnlyList<(int Id, string Name)> AudioTracks { get; private set; } = Array.Empty<(int, string)>();
     public IReadOnlyList<(int Id, string Name)> SubtitleTracks { get; private set; } = Array.Empty<(int, string)>();
 

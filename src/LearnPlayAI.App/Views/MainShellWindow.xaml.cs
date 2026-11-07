@@ -1,9 +1,12 @@
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using LearnPlayAI.App.Services;
+using LearnPlayAI.App.ViewModels;
 using LearnPlayAI.Core.Models;
 using LearnPlayAI.Core.Services;
+using Microsoft.Win32;
 
 namespace LearnPlayAI.App.Views;
 
@@ -11,11 +14,19 @@ public partial class MainShellWindow : Window
 {
     private readonly SettingsService _settingsService;
     private readonly ThemeManager _themeManager;
+    private readonly LibraryService _libraryService;
+    private readonly PlayerView _playerView;
 
-    public MainShellWindow(SettingsService settingsService, ThemeManager themeManager)
+    public MainShellWindow(
+        SettingsService settingsService,
+        ThemeManager themeManager,
+        LibraryService libraryService,
+        PlayerViewModel playerViewModel,
+        TransportBarView transportBarView)
     {
         _settingsService = settingsService;
         _themeManager = themeManager;
+        _libraryService = libraryService;
 
         // ThemeManager.Apply must merge the theme dictionary into Application.Resources
         // *before* InitializeComponent() parses this window's XAML: the nav buttons use
@@ -27,7 +38,11 @@ public partial class MainShellWindow : Window
         _themeManager.Apply(_settingsService.Current.Theme);
 
         InitializeComponent();
-        CenterContent.Content = BuildPlaceholder("Select Library, Playlists, or Recent from the left to get started.");
+
+        _playerView = new PlayerView(playerViewModel);
+        TransportBarHost.Child = transportBarView;
+
+        CenterContent.Content = BuildHomePlaceholder();
     }
 
     private void OnNavLibrary(object sender, RoutedEventArgs e) =>
@@ -64,6 +79,45 @@ public partial class MainShellWindow : Window
         panel.Children.Add(themeLabel);
         panel.Children.Add(toggleButton);
         CenterContent.Content = panel;
+    }
+
+    private UIElement BuildHomePlaceholder()
+    {
+        var panel = new StackPanel { Margin = new Thickness(24) };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Select Library, Playlists, or Recent from the left, or open a file directly:",
+            Foreground = (Brush)FindResource("Text.Primary"),
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 12)
+        });
+        var openButton = new Button
+        {
+            Content = "Open Video File...",
+            Padding = new Thickness(12, 6, 12, 6),
+            HorizontalAlignment = HorizontalAlignment.Left
+        };
+        openButton.Click += async (_, _) => await OpenFileDialogAsync();
+        panel.Children.Add(openButton);
+        return panel;
+    }
+
+    private async Task OpenFileDialogAsync()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Video files|*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm|All files|*.*"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        var entry = await _libraryService.RegisterFileAsync(dialog.FileName);
+        OpenVideo(entry);
+    }
+
+    private void OpenVideo(VideoEntry entry)
+    {
+        CenterContent.Content = _playerView;
+        _playerView.PlayVideo(entry);
     }
 
     private UIElement BuildPlaceholder(string text) => new TextBlock

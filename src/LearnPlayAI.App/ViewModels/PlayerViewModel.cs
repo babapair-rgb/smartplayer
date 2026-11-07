@@ -1,0 +1,83 @@
+using System.Windows;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using LearnPlayAI.Core.Models;
+using LearnPlayAI.Core.Player;
+using LearnPlayAI.Core.Services;
+
+namespace LearnPlayAI.App.ViewModels;
+
+public partial class PlayerViewModel : ObservableObject
+{
+    private readonly LibraryService _libraryService;
+    private VideoEntry? _currentEntry;
+    private DateTime _lastPersistUtc = DateTime.MinValue;
+
+    [ObservableProperty] private bool isPlaying;
+    [ObservableProperty] private double positionSeconds;
+    [ObservableProperty] private double durationSeconds;
+    [ObservableProperty] private string currentTitle = "No video loaded";
+    [ObservableProperty] private double volume;
+
+    public IPlayerEngine Engine { get; }
+
+    public PlayerViewModel(IPlayerEngine engine, LibraryService libraryService, SettingsService settingsService)
+    {
+        Engine = engine;
+        _libraryService = libraryService;
+        volume = settingsService.Current.DefaultVolume;
+        Engine.Volume = (float)volume;
+
+        Engine.PositionChanged += (_, pos) =>
+        {
+            Application.Current.Dispatcher.Invoke(() => PositionSeconds = pos.TotalSeconds);
+            MaybePersistPosition(pos);
+        };
+        Engine.DurationChanged += (_, dur) =>
+        {
+            Application.Current.Dispatcher.Invoke(() => DurationSeconds = dur.TotalSeconds);
+            if (_currentEntry is not null)
+            {
+                _ = _libraryService.UpdateDurationAsync(_currentEntry.VideoId, dur);
+            }
+        };
+        Engine.StateChanged += (_, state) =>
+            Application.Current.Dispatcher.Invoke(() => IsPlaying = state == PlaybackState.Playing);
+    }
+
+    public void LoadVideo(VideoEntry entry)
+    {
+        _currentEntry = entry;
+        CurrentTitle = entry.Title;
+        Engine.Open(entry.FilePath);
+        Engine.Play();
+        if (entry.LastPosition > TimeSpan.Zero)
+        {
+            Engine.Seek(entry.LastPosition);
+        }
+    }
+
+    private void MaybePersistPosition(TimeSpan position)
+    {
+        if (_currentEntry is null) return;
+        var now = DateTime.UtcNow;
+        if ((now - _lastPersistUtc).TotalSeconds < 5) return;
+        _lastPersistUtc = now;
+        _ = _libraryService.UpdatePlaybackPositionAsync(_currentEntry.VideoId, position);
+    }
+
+    [RelayCommand]
+    private void PlayPause()
+    {
+        if (Engine.State == PlaybackState.Playing) Engine.Pause();
+        else Engine.Play();
+    }
+
+    [RelayCommand]
+    private void Stop() => Engine.Stop();
+
+    [RelayCommand]
+    private void Seek(double seconds) => Engine.Seek(TimeSpan.FromSeconds(seconds));
+
+    partial void OnVolumeChanged(double value) => Engine.Volume = (float)value;
+}

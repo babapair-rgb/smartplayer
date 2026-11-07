@@ -11,6 +11,7 @@ public interface IPlayerEngine : IDisposable
     TimeSpan Position { get; }
     TimeSpan Duration { get; }
     float Rate { get; }
+    float Volume { get; set; }
 
     IReadOnlyList<(int Id, string Name)> AudioTracks { get; }
     IReadOnlyList<(int Id, string Name)> SubtitleTracks { get; }

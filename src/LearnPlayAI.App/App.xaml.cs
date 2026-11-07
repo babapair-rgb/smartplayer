@@ -32,6 +32,8 @@ public partial class App : Application
         services.AddSingleton<SettingsService>();
         services.AddSingleton<IPlayerEngine, LibVlcPlayerEngine>();
         services.AddSingleton<Services.ThemeManager>();
+        services.AddSingleton<ViewModels.PlayerViewModel>();
+        services.AddSingleton<Views.TransportBarView>();
         services.AddSingleton<Views.MainShellWindow>();
 
         Services = services.BuildServiceProvider();
