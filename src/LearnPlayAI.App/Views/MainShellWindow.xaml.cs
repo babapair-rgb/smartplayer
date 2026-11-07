@@ -1,7 +1,9 @@
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using LearnPlayAI.App.Services;
 using LearnPlayAI.App.ViewModels;
 using LearnPlayAI.Core.Models;
@@ -25,6 +27,7 @@ public partial class MainShellWindow : Window
     private WindowState _previousWindowState = WindowState.Normal;
     private WindowStyle _previousWindowStyle = WindowStyle.SingleBorderWindow;
     private bool _isFullScreen;
+    private DispatcherTimer? _toastTimer;
 
     public MainShellWindow(
         SettingsService settingsService,
@@ -145,24 +148,78 @@ public partial class MainShellWindow : Window
         }
     }
 
-    private void OpenVideo(VideoEntry entry)
+    private async void OpenVideo(VideoEntry entry)
     {
         _activePlaylistId = null;
+        if (!await EnsureFileAvailableAsync(entry)) return;
         OpenVideoEntry(entry);
     }
 
     private async void PlayFromPlaylist(Guid playlistId, Guid startVideoId)
     {
-        var entry = await _libraryService.GetByIdAsync(startVideoId);
-        if (entry is null) return;
         _activePlaylistId = playlistId;
-        OpenVideoEntry(entry);
+        var playlist = await _playlistService.GetPlaylistAsync(playlistId);
+        if (playlist is null)
+        {
+            _activePlaylistId = null;
+            return;
+        }
+
+        var ordered = playlist.Items.OrderBy(i => i.Position).ToList();
+        var startIndex = ordered.FindIndex(i => i.VideoId == startVideoId);
+        if (startIndex < 0) startIndex = 0;
+
+        for (var i = startIndex; i < ordered.Count; i++)
+        {
+            var entry = await _libraryService.GetByIdAsync(ordered[i].VideoId);
+            if (entry is null) continue;
+            if (!await EnsureFileAvailableAsync(entry)) continue;
+            OpenVideoEntry(entry);
+            return;
+        }
+
+        _activePlaylistId = null;
+        ShowToast("No playable videos remain in this playlist.");
     }
 
     private void OpenVideoEntry(VideoEntry entry)
     {
         CenterContent.Content = _playerView;
         _playerView.PlayVideo(entry);
+    }
+
+    private async System.Threading.Tasks.Task<bool> EnsureFileAvailableAsync(VideoEntry entry)
+    {
+        if (File.Exists(entry.FilePath)) return true;
+
+        await _libraryService.MarkMissingAsync(entry.VideoId);
+
+        var result = MessageBox.Show(
+            $"\"{entry.Title}\" could not be found at:\n{entry.FilePath}\n\nLocate the file? (No removes it from your library)",
+            "Video missing", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Video files|*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm|All files|*.*"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                var relocated = await _libraryService.RegisterFileAsync(dialog.FileName);
+                entry.FilePath = relocated.FilePath;
+                entry.IsMissing = false;
+                return true;
+            }
+            return false;
+        }
+
+        if (result == MessageBoxResult.No)
+        {
+            await _libraryService.RemoveAsync(entry.VideoId);
+        }
+
+        return false;
     }
 
     private void OnEngineStateChanged(object? sender, PlaybackState state)
@@ -173,8 +230,14 @@ public partial class MainShellWindow : Window
 
     private void OnEngineError(object? sender, string message)
     {
-        if (_activePlaylistId is null) return;
-        Dispatcher.Invoke(() => _ = AdvancePlaylistAsync());
+        Dispatcher.Invoke(() =>
+        {
+            ShowToast($"Playback error: {message}");
+            if (_activePlaylistId is not null)
+            {
+                _ = AdvancePlaylistAsync();
+            }
+        });
     }
 
     private async System.Threading.Tasks.Task AdvancePlaylistAsync()
@@ -201,6 +264,21 @@ public partial class MainShellWindow : Window
         {
             OpenVideoEntry(nextEntry);
         }
+    }
+
+    public void ShowToast(string message)
+    {
+        ToastText.Text = message;
+        ToastBorder.Visibility = Visibility.Visible;
+
+        _toastTimer?.Stop();
+        _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        _toastTimer.Tick += (_, _) =>
+        {
+            ToastBorder.Visibility = Visibility.Collapsed;
+            _toastTimer!.Stop();
+        };
+        _toastTimer.Start();
     }
 
     public void ToggleFullScreen()

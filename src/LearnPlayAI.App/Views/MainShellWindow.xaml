@@ -5,36 +5,44 @@
         Background="{DynamicResource App.Background}"
         AllowDrop="True" Drop="OnWindowDrop">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="90" />
-        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="90" />
+            </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" MinWidth="160" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="280" MinWidth="200" />
-            </Grid.ColumnDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" MinWidth="160" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="280" MinWidth="200" />
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" Background="{DynamicResource Sidebar.Background}">
-                <Button Content="Library" Click="OnNavLibrary" Style="{StaticResource NavButtonStyle}" />
-                <Button Content="Playlists" Click="OnNavPlaylists" Style="{StaticResource NavButtonStyle}" />
-                <Button Content="Recent" Click="OnNavRecent" Style="{StaticResource NavButtonStyle}" />
-                <Button Content="Notes" IsEnabled="False" Style="{StaticResource NavButtonStyle}" />
-                <Button Content="Settings" Click="OnNavSettings" Style="{StaticResource NavButtonStyle}" />
-            </StackPanel>
+                <StackPanel Grid.Column="0" Background="{DynamicResource Sidebar.Background}">
+                    <Button Content="Library" Click="OnNavLibrary" Style="{StaticResource NavButtonStyle}" />
+                    <Button Content="Playlists" Click="OnNavPlaylists" Style="{StaticResource NavButtonStyle}" />
+                    <Button Content="Recent" Click="OnNavRecent" Style="{StaticResource NavButtonStyle}" />
+                    <Button Content="Notes" IsEnabled="False" Style="{StaticResource NavButtonStyle}" />
+                    <Button Content="Settings" Click="OnNavSettings" Style="{StaticResource NavButtonStyle}" />
+                </StackPanel>
 
-            <ContentControl x:Name="CenterContent" Grid.Column="1" />
+                <ContentControl x:Name="CenterContent" Grid.Column="1" />
 
-            <Border Grid.Column="2" Background="{DynamicResource Sidebar.Background}">
-                <TextBlock Text="AI Assistant and live notes arrive in a later phase."
-                           Foreground="{DynamicResource Text.Primary}"
-                           Margin="16" Opacity="0.6" TextWrapping="Wrap" />
-            </Border>
+                <Border Grid.Column="2" Background="{DynamicResource Sidebar.Background}">
+                    <TextBlock Text="AI Assistant and live notes arrive in a later phase."
+                               Foreground="{DynamicResource Text.Primary}"
+                               Margin="16" Opacity="0.6" TextWrapping="Wrap" />
+                </Border>
+            </Grid>
+
+            <Border x:Name="TransportBarHost" Grid.Row="1" Background="{DynamicResource Sidebar.Background}"
+                    BorderBrush="{DynamicResource Border.Default}" BorderThickness="0,1,0,0" />
         </Grid>
 
-        <Border x:Name="TransportBarHost" Grid.Row="1" Background="{DynamicResource Sidebar.Background}"
-                BorderBrush="{DynamicResource Border.Default}" BorderThickness="0,1,0,0" />
+        <Border x:Name="ToastBorder" Background="#CC323232" CornerRadius="6" Padding="12,8"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,110"
+                Visibility="Collapsed">
+            <TextBlock x:Name="ToastText" Foreground="White" TextWrapping="Wrap" MaxWidth="360" />
+        </Border>
     </Grid>
 </Window>
