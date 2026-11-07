@@ -92,32 +92,8 @@ public partial class MainShellWindow : Window
     private void OnNavRecent(object sender, RoutedEventArgs e) =>
         CenterContent.Content = new Panels.RecentPanelView(_libraryService, OpenVideo);
 
-    private void OnNavSettings(object sender, RoutedEventArgs e)
-    {
-        var panel = new StackPanel { Margin = new Thickness(24) };
-        var themeLabel = new TextBlock
-        {
-            Text = $"Current theme: {_settingsService.Current.Theme}",
-            Foreground = (Brush)FindResource("Text.Primary"),
-            Margin = new Thickness(0, 0, 0, 12)
-        };
-        var toggleButton = new Button
-        {
-            Content = "Toggle theme",
-            Padding = new Thickness(12, 6, 12, 6),
-            HorizontalAlignment = HorizontalAlignment.Left
-        };
-        toggleButton.Click += async (_, _) =>
-        {
-            var next = _settingsService.Current.Theme == ThemeMode.Dark ? ThemeMode.Light : ThemeMode.Dark;
-            await _settingsService.SetThemeAsync(next);
-            _themeManager.Apply(next);
-            themeLabel.Text = $"Current theme: {next}";
-        };
-        panel.Children.Add(themeLabel);
-        panel.Children.Add(toggleButton);
-        CenterContent.Content = panel;
-    }
+    private void OnNavSettings(object sender, RoutedEventArgs e) =>
+        CenterContent.Content = new Panels.SettingsPanelView(_settingsService, _themeManager, ReapplyShortcuts);
 
     private UIElement BuildHomePlaceholder()
     {
