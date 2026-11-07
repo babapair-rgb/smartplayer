@@ -146,6 +146,10 @@ public partial class MainShellWindow : Window
             {
                 // Skip files that can't be read (locked, permission denied, etc.)
             }
+            catch (UnauthorizedAccessException)
+            {
+                // Skip files we don't have permission to read
+            }
         }
         if (lastRegistered is not null)
         {

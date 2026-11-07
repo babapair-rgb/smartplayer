@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using LearnPlayAI.Core.Models;
 
@@ -33,6 +35,9 @@ public sealed class KeyboardShortcutManager
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
+        // Let text-entry controls receive keystrokes (space, letters, arrows) as typed text.
+        if (Keyboard.FocusedElement is TextBoxBase or PasswordBox) return;
+
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
         if (_bindings.TryGetValue((key, Keyboard.Modifiers), out var action))
         {
