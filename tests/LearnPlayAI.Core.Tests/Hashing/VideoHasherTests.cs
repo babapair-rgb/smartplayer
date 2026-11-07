@@ -67,6 +67,33 @@ public class VideoHasherTests
         }
     }
 
+    [Fact]
+    public void ComputeHash_LargeFile_DetectsChangeInTailSample()
+    {
+        // Files over 1 MB have their last 1 MB sampled. A change to the final byte
+        // must therefore alter the hash; this guards against the tail read being
+        // skipped or read from the wrong offset.
+        var hasher = new VideoHasher();
+        const int size = 2 * 1024 * 1024;
+        var bytes = new byte[size];
+        new Random(42).NextBytes(bytes);
+
+        var path1 = WriteTempFile(bytes);
+        var modified = (byte[])bytes.Clone();
+        modified[size - 1] = (byte)(modified[size - 1] + 1);
+        var path2 = WriteTempFile(modified);
+
+        try
+        {
+            Assert.NotEqual(hasher.ComputeHash(path1), hasher.ComputeHash(path2));
+        }
+        finally
+        {
+            File.Delete(path1);
+            File.Delete(path2);
+        }
+    }
+
     private static string WriteTempFile(byte[] bytes)
     {
         var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".bin");
