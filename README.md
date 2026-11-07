@@ -14,6 +14,18 @@ separate phase).
     dotnet build
     dotnet run --project src/LearnPlayAI.App/LearnPlayAI.App.csproj
 
+## Publishing a standalone build
+
+    dotnet publish src/LearnPlayAI.App -c Release -r win-x64 --self-contained
+
+Ship the whole `publish` output folder (the `.exe` plus its native DLLs and
+`libvlc/` subfolder) — the target machine doesn't need .NET installed.
+
+**Do not add `-p:PublishSingleFile=true`.** WPF apps are not supported with
+single-file publish: the bundled assembly reports an empty `Assembly.Location`,
+which breaks pack-URI resolution for XAML/BAML resources (e.g. `App.xaml`'s
+styles), surfacing as a `StaticResourceExtension` exception at startup.
+
 ## Run the automated tests
 
     dotnet test
