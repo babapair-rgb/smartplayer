@@ -19,6 +19,7 @@ public partial class MainShellWindow : Window
     private readonly PlaylistService _playlistService;
     private readonly PlayerViewModel _playerViewModel;
     private readonly PlayerView _playerView;
+    private readonly Input.KeyboardShortcutManager _shortcutManager;
 
     private Guid? _activePlaylistId;
     private WindowState _previousWindowState = WindowState.Normal;
@@ -31,13 +32,15 @@ public partial class MainShellWindow : Window
         LibraryService libraryService,
         PlaylistService playlistService,
         PlayerViewModel playerViewModel,
-        TransportBarView transportBarView)
+        TransportBarView transportBarView,
+        Input.KeyboardShortcutManager shortcutManager)
     {
         _settingsService = settingsService;
         _themeManager = themeManager;
         _libraryService = libraryService;
         _playlistService = playlistService;
         _playerViewModel = playerViewModel;
+        _shortcutManager = shortcutManager;
 
         // ThemeManager.Apply must merge the theme dictionary into Application.Resources
         // *before* InitializeComponent() parses this window's XAML: the nav buttons use
@@ -56,8 +59,29 @@ public partial class MainShellWindow : Window
         _playerViewModel.Engine.StateChanged += OnEngineStateChanged;
         _playerViewModel.Engine.ErrorOccurred += OnEngineError;
 
+        RegisterShortcutActions();
+        ReapplyShortcuts();
+
         CenterContent.Content = BuildHomePlaceholder();
     }
+
+    private void RegisterShortcutActions()
+    {
+        _shortcutManager.RegisterAction("PlayPause", () => _playerViewModel.PlayPauseCommand.Execute(null));
+        _shortcutManager.RegisterAction("Stop", () => _playerViewModel.StopCommand.Execute(null));
+        _shortcutManager.RegisterAction("SeekForward", () => _playerViewModel.SeekForwardCommand.Execute(null));
+        _shortcutManager.RegisterAction("SeekBackward", () => _playerViewModel.SeekBackwardCommand.Execute(null));
+        _shortcutManager.RegisterAction("VolumeUp", () => _playerViewModel.VolumeUpCommand.Execute(null));
+        _shortcutManager.RegisterAction("VolumeDown", () => _playerViewModel.VolumeDownCommand.Execute(null));
+        _shortcutManager.RegisterAction("ToggleMute", () => _playerViewModel.ToggleMuteCommand.Execute(null));
+        _shortcutManager.RegisterAction("ToggleFullScreen", ToggleFullScreen);
+        _shortcutManager.RegisterAction("StepFrame", () => _playerViewModel.StepFrameCommand.Execute(null));
+        _shortcutManager.RegisterAction("Screenshot", () => _playerViewModel.ScreenshotCommand.Execute(null));
+        _shortcutManager.RegisterAction("SpeedUp", () => _playerViewModel.SpeedUpCommand.Execute(null));
+        _shortcutManager.RegisterAction("SpeedDown", () => _playerViewModel.SpeedDownCommand.Execute(null));
+    }
+
+    public void ReapplyShortcuts() => _shortcutManager.Apply(this, _settingsService.Shortcuts);
 
     private void OnNavLibrary(object sender, RoutedEventArgs e) =>
         CenterContent.Content = new Panels.LibraryPanelView(_libraryService, _playlistService, OpenVideo);

@@ -34,6 +34,7 @@ public partial class App : Application
         services.AddSingleton<Services.ThemeManager>();
         services.AddSingleton<ViewModels.PlayerViewModel>();
         services.AddSingleton<Views.TransportBarView>();
+        services.AddSingleton<Input.KeyboardShortcutManager>();
         services.AddSingleton<Views.MainShellWindow>();
 
         Services = services.BuildServiceProvider();

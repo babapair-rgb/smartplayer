@@ -13,6 +13,8 @@ public partial class PlayerViewModel : ObservableObject
     private readonly LibraryService _libraryService;
     private VideoEntry? _currentEntry;
     private DateTime _lastPersistUtc = DateTime.MinValue;
+    private double _volumeBeforeMute;
+    private bool _isMuted;
 
     [ObservableProperty] private bool isPlaying;
     [ObservableProperty] private double positionSeconds;
@@ -103,6 +105,34 @@ public partial class PlayerViewModel : ObservableObject
 
     [RelayCommand]
     private void SpeedDown() => SetRate(Rate - 0.25f);
+
+    [RelayCommand]
+    private void SeekForward() => Engine.Seek(TimeSpan.FromSeconds(PositionSeconds + 10));
+
+    [RelayCommand]
+    private void SeekBackward() => Engine.Seek(TimeSpan.FromSeconds(Math.Max(0, PositionSeconds - 10)));
+
+    [RelayCommand]
+    private void VolumeUp() => Volume = Math.Clamp(Volume + 0.1, 0, 1);
+
+    [RelayCommand]
+    private void VolumeDown() => Volume = Math.Clamp(Volume - 0.1, 0, 1);
+
+    [RelayCommand]
+    private void ToggleMute()
+    {
+        if (_isMuted)
+        {
+            Volume = _volumeBeforeMute;
+            _isMuted = false;
+        }
+        else
+        {
+            _volumeBeforeMute = Volume;
+            Volume = 0;
+            _isMuted = true;
+        }
+    }
 
     [RelayCommand]
     private void Screenshot()
