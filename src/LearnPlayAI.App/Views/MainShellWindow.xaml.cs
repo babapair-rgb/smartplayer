@@ -44,11 +44,8 @@ public partial class MainShellWindow : Window
         _playerViewModel = playerViewModel;
         _shortcutManager = shortcutManager;
 
-        // NavButtonStyle now lives in App.xaml's own Application.Resources (theme-independent,
-        // using {DynamicResource Text.Primary} for its Foreground), so it no longer depends on
-        // a theme dictionary being merged first. We still apply the theme before
-        // InitializeComponent() so the window's own brush resources (App.Background, etc.) are
-        // available as soon as the window is constructed.
+        // Apply the theme before InitializeComponent() so the window's DynamicResource-bound
+        // brushes (App.Background, Text.Primary, etc.) are available as soon as it's constructed.
         _themeManager.Apply(_settingsService.Current.Theme);
 
         InitializeComponent();

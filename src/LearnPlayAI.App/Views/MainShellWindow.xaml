@@ -4,6 +4,16 @@
         Title="LearnPlay AI" Height="800" Width="1280"
         Background="{DynamicResource App.Background}"
         AllowDrop="True" Drop="OnWindowDrop">
+    <Window.Resources>
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid>
             <Grid.RowDefinitions>

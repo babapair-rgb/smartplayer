@@ -41,8 +41,13 @@ public partial class App : Application
 
         DispatcherUnhandledException += (_, args) =>
         {
+            var logPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "LearnPlayAI", "crash.log");
+            File.WriteAllText(logPath, args.Exception.ToString());
+
             MessageBox.Show(
-                $"An unexpected error occurred:\n{args.Exception.Message}",
+                $"An unexpected error occurred:\n{args.Exception}",
                 "LearnPlay AI", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
