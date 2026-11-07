@@ -18,6 +18,35 @@ public class SettingsServiceTests
     }
 
     [Fact]
+    public void DefaultShortcuts_Create_ContainsAllActionIdsWithExactGestures()
+    {
+        var expected = new Dictionary<string, string>
+        {
+            ["PlayPause"] = "Space",
+            ["Stop"] = "Ctrl+Space",
+            ["SeekForward"] = "Right",
+            ["SeekBackward"] = "Left",
+            ["VolumeUp"] = "Up",
+            ["VolumeDown"] = "Down",
+            ["ToggleMute"] = "M",
+            ["ToggleFullScreen"] = "F",
+            ["StepFrame"] = "OemPeriod",
+            ["Screenshot"] = "Ctrl+Shift+S",
+            ["SpeedUp"] = "OemPlus",
+            ["SpeedDown"] = "OemMinus",
+        };
+
+        var actual = DefaultShortcuts.Create().ToDictionary(s => s.ActionId, s => s.KeyGesture);
+
+        Assert.Equal(expected.Count, actual.Count);
+        foreach (var (actionId, gesture) in expected)
+        {
+            Assert.True(actual.ContainsKey(actionId), $"Missing default shortcut for action '{actionId}'.");
+            Assert.Equal(gesture, actual[actionId]);
+        }
+    }
+
+    [Fact]
     public async Task InitializeAsync_StoredShortcuts_UsesStoredInsteadOfDefaults()
     {
         var repository = new FakeSettingsRepository();
