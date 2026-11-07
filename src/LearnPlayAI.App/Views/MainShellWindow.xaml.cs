@@ -68,7 +68,7 @@ public partial class MainShellWindow : Window
     }
 
     private void OnNavLibrary(object sender, RoutedEventArgs e) =>
-        CenterContent.Content = BuildPlaceholder("Library panel arrives in a later task.");
+        CenterContent.Content = new Panels.LibraryPanelView(_libraryService, OpenVideo);
 
     private void OnNavPlaylists(object sender, RoutedEventArgs e) =>
         CenterContent.Content = BuildPlaceholder("Playlists panel arrives in a later task.");
@@ -134,6 +134,23 @@ public partial class MainShellWindow : Window
 
         var entry = await _libraryService.RegisterFileAsync(dialog.FileName);
         OpenVideo(entry);
+    }
+
+    private async void OnWindowDrop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop)!;
+        if (files.Length == 0) return;
+
+        VideoEntry? lastRegistered = null;
+        foreach (var file in files)
+        {
+            lastRegistered = await _libraryService.RegisterFileAsync(file);
+        }
+        if (lastRegistered is not null)
+        {
+            OpenVideo(lastRegistered);
+        }
     }
 
     private void OpenVideo(VideoEntry entry)
