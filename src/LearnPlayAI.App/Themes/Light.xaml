@@ -1,0 +1,17 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="App.Background" Color="#FFF5F5F5" />
+    <SolidColorBrush x:Key="Sidebar.Background" Color="#FFE8E8E8" />
+    <SolidColorBrush x:Key="Text.Primary" Color="#FF1E1E1E" />
+    <SolidColorBrush x:Key="Accent" Color="#FF0A64C4" />
+    <SolidColorBrush x:Key="Border.Default" Color="#FFCFCFCF" />
+
+    <Style x:Key="NavButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource Text.Primary}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+</ResourceDictionary>

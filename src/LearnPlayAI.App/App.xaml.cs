@@ -31,14 +31,15 @@ public partial class App : Application
         services.AddSingleton<PlaylistService>();
         services.AddSingleton<SettingsService>();
         services.AddSingleton<IPlayerEngine, LibVlcPlayerEngine>();
-        services.AddSingleton<MainWindow>();
+        services.AddSingleton<Services.ThemeManager>();
+        services.AddSingleton<Views.MainShellWindow>();
 
         Services = services.BuildServiceProvider();
 
         var settingsService = Services.GetRequiredService<SettingsService>();
         settingsService.InitializeAsync().GetAwaiter().GetResult();
 
-        var mainWindow = Services.GetRequiredService<MainWindow>();
+        var mainWindow = Services.GetRequiredService<Views.MainShellWindow>();
         mainWindow.Show();
     }
 }
