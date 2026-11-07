@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -45,8 +46,12 @@ public partial class SettingsPanelView : UserControl
             var key = keyArgs.Key == Key.System ? keyArgs.SystemKey : keyArgs.Key;
             if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift or Key.LeftAlt or Key.RightAlt) return;
 
-            var gesture = new KeyGesture(key, Keyboard.Modifiers);
-            capturedGesture = new KeyGestureConverter().ConvertToString(gesture);
+            var modifierParts = new List<string>();
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) modifierParts.Add("Ctrl");
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) modifierParts.Add("Shift");
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) modifierParts.Add("Alt");
+            modifierParts.Add(key.ToString());
+            capturedGesture = string.Join("+", modifierParts);
             window.Close();
         };
 
