@@ -1,23 +1,13 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows;
+using LearnPlayAI.Core.Services;
 
 namespace LearnPlayAI.App;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    public MainWindow(SettingsService settingsService)
     {
         InitializeComponent();
+        StatusText.Text = $"LearnPlay AI starting up (theme: {settingsService.Current.Theme})";
     }
 }
